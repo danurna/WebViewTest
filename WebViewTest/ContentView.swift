@@ -3,6 +3,8 @@ import WebKit
 import SafariServices
 import BetterSafariView
 
+let someContent = "🤩 CONTENT SUPPOSED TO BE PASSED TO WEBVIEW"
+
 struct ContentView: View {
     private let url = URL(string: "https://danurna.github.io/webview-links-behaviour/")!
     @State private var showWebView = false
@@ -65,17 +67,32 @@ struct ContentView_Previews: PreviewProvider {
     }
 }
 
- 
+let messageHandlerId = "sampleMessageHandler"
+let messageHandler = WebViewMessageHandler()
+
 struct WebView: UIViewRepresentable {
     var url: URL
  
     func makeUIView(context: Context) -> WKWebView {
-        return WKWebView()
+        let config = WKWebViewConfiguration()
+        config.userContentController.addScriptMessageHandler(messageHandler, contentWorld: .page, name: messageHandlerId)
+        let webView = WKWebView(frame: .zero, configuration: config)
+        webView.scrollView.isScrollEnabled = false
+        return webView
     }
  
     func updateUIView(_ webView: WKWebView, context: Context) {
         let request = URLRequest(url: url)
         webView.load(request)
+    }
+}
+
+class WebViewMessageHandler: NSObject, WKScriptMessageHandlerWithReply {
+    func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage, replyHandler: @escaping (Any?, String?) -> Void) {
+        guard message.name == messageHandlerId else { return }
+        
+        print("Got: \(message.body)")
+        replyHandler(someContent, nil)
     }
 }
 
@@ -89,5 +106,4 @@ struct SFSafariViewControllerView: UIViewControllerRepresentable {
     func updateUIViewController(_ uiViewController: SFSafariViewController, context: UIViewControllerRepresentableContext<SFSafariViewControllerView>) {
 
     }
-
 }
